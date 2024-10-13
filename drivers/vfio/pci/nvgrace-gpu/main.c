@@ -7,7 +7,7 @@
 #include <linux/vfio_pci_core.h>
 #include <linux/delay.h>
 #include <linux/jiffies.h>
-#include "egm.h"
+#include <linux/nvgrace-egm.h>
 
 struct h_node {
 	unsigned long mem_offset;
