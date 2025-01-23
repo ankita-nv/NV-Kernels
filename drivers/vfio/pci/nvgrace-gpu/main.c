@@ -1006,7 +1006,7 @@ static int nvgrace_gpu_probe(struct pci_dev *pdev,
 
 out_egm_unreg:
 	if (egm_enabled)
-		unregister_egm_node(nvdev->egm_node);
+		unregister_egm_node(pdev);
 out_put_vdev:
 	vfio_put_device(&nvdev->core_device.vdev);
 	return ret;
@@ -1015,12 +1015,9 @@ out_put_vdev:
 static void nvgrace_gpu_remove(struct pci_dev *pdev)
 {
 	struct vfio_pci_core_device *core_device = dev_get_drvdata(&pdev->dev);
-	struct nvgrace_gpu_pci_core_device *nvdev =
-		container_of(core_device, struct nvgrace_gpu_pci_core_device,
-			     core_device);
 
 	if (egm_enabled)
-		unregister_egm_node(nvdev->egm_node);
+		unregister_egm_node(pdev);
 
 	vfio_pci_core_unregister_device(core_device);
 	vfio_put_device(&core_device->vdev);
