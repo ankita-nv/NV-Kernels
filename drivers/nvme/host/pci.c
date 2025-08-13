@@ -266,10 +266,14 @@ enum nvme_iod_flags {
 	/* single segment dma mapping */
 	IOD_SINGLE_SEGMENT	= 1U << 2,
 
+	/* DMA mapped with PCI_P2PDMA_MAP_BUS_ADDR */
+	IOD_P2P_BUS_ADDR	= 1U << 3,
+
 #ifdef CONFIG_NVFS
 	/* NVFS GPU Direct Storage I/O */
-	IOD_NVFS_IO		= 1U << 3,
+	IOD_NVFS_IO		= 1U << 4,
 #endif
+
 };
 
 struct nvme_dma_vec {
@@ -747,7 +751,8 @@ static void nvme_unmap_data(struct request *req)
 		return;
 	}
 
-	if (!blk_rq_dma_unmap(req, dma_dev, &iod->dma_state, iod->total_len)) {
+	if (!blk_rq_dma_unmap(req, dma_dev, &iod->dma_state, iod->total_len,
+				iod->flags & IOD_P2P_BUS_ADDR)) {
 		if (nvme_pci_cmd_use_sgl(&iod->cmd))
 			nvme_free_sgls(req);
 		else
@@ -1067,6 +1072,9 @@ static blk_status_t nvme_map_data(struct request *req)
 
 	if (!blk_rq_dma_map_iter_start(req, dev->dev, &iod->dma_state, &iter))
 		return iter.status;
+
+	if (iter.p2pdma.map == PCI_P2PDMA_MAP_BUS_ADDR)
+		iod->flags |= IOD_P2P_BUS_ADDR;
 
 	if (use_sgl == SGL_FORCED ||
 	    (use_sgl == SGL_SUPPORTED &&
